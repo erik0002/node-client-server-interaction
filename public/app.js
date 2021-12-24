@@ -62,8 +62,19 @@ new Vue({
                 .catch(e => console.log(e))
         },
         removeTodo(id) {
-            fetch('/api/todo/' + id, {
-                method: 'delete'
+            const query = `
+                mutation {
+                    deleteTodo(id: "${id}")
+                }
+            `
+
+            fetch('/qraphql',{
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ query })
             })
             .then(() => {
                 this.todos = this.todos.filter(t => t.id !== id)
@@ -71,15 +82,27 @@ new Vue({
             .catch(e => console.log(e))
         },
         completeTodo(id) {
-            fetch('/api/todo/' + id, {
-                method: 'put',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({done: true})
+
+            const query = `
+                mutation {
+                    completeTodo(id: "${id}") {
+                       updatedAt
+                    }
+                }
+            `
+
+            fetch('/qraphql', {
+                method: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ query })
             })
                 .then(res => res.json())
-                .then(({todo}) => {
-                    const idx = this.todos.findIndex(t => t.id === todo.id)
-                    this.todos[idx].updatedAt = todo.updatedAt
+                .then(response => {
+                    const idx = this.todos.findIndex(t => t.id === id)
+                    this.todos[idx].updatedAt = response.data.completeTodo.updatedAt
                 })
                 .catch(e => console.log(e))
             console.log(id)
